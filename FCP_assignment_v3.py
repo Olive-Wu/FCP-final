@@ -141,7 +141,7 @@ def test_networks():
 
 	print("Testing ring network")
 	assert(network.get_mean_degree()==2), network.get_mean_degree()
-	assert(network.get_clustering()==0), network.get_clustering()
+	assert(network.get_mean_clustering()==0), network.get_mean_clustering()
 	assert(network.get_mean_path_length()==2.777777777777778), network.get_mean_path_length()
 
 	nodes = []
