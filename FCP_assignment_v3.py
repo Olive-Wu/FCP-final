@@ -170,7 +170,7 @@ def test_networks():
 	print("Testing fully connected network")
 	assert(network.get_mean_degree()==num_nodes-1), network.get_mean_degree()
 	assert(network.get_mean_clustering()==1),  network.get_mean_clustering()
-	assert(network.get_path_length()==1), network.get_path_length()
+	assert(network.get_mean_path_length()==1), network.get_mean_path_length()
 
 	print("All tests passed")
 
