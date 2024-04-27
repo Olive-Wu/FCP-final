@@ -16,11 +16,10 @@ class Node:
 class Network: 
 
 	def __init__(self, nodes=None):
-
-        if nodes is None:
-            self.nodes = []
-        else:
-            self.nodes = nodes 
+		if nodes is None:
+			self.nodes = []
+		else:
+			self.nodes = nodes
 
 	def get_mean_degree(self):
 		if not self.nodes:
