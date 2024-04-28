@@ -13,7 +13,7 @@ class Node:
 		self.connections = connections
 		self.value = value
 
-class Network: 
+class Network:
 
 	def __init__(self, nodes=None):
 		if nodes is None:
@@ -24,7 +24,7 @@ class Network:
 	def get_mean_degree(self):
 		if not self.nodes:
 			return 0
-			  
+
 		degrees = [sum(1 for conn in node.connections if conn == 1) for node in self.nodes]
 		mean_degree = np.mean(degrees)
 		return mean_degree
@@ -49,19 +49,19 @@ class Network:
 
 		mean_clustering_coefficient = np.mean(clustering_coeffs)
 		return mean_clustering_coefficient
-		
+
 
 	def get_mean_path_length(self):
 		num_nodes = len(self.nodes)
 		path_lengths = []
-    
+
 		for start in range(num_nodes):
 			visited = [False] * num_nodes
 			distances = [0] * num_nodes
 			queue = [start]
-        
+
 			visited[start] = True
-        
+
 			while queue:
 				current = queue.pop(0)
 				for neighbour_index, connected in enumerate(self.nodes[current].connections):
@@ -94,37 +94,72 @@ class Network:
 					self.nodes[neighbour_index].connections[index] = 1
 
 	def make_ring_network(self, N, neighbour_range=1):
-		#Your code  for task 4 goes here
+		self.nodes = []
+		for node_number in range(N):
+			connections = [0 for _ in range(N)]
+			for i in range(-neighbour_range, neighbour_range + 1):
+				if i != 0:  # Avoid self-connection
+					neighbour_index = (node_number + i) % N
+					connections[neighbour_index] = 1
+			# When initializing Node, provide a default value for `value` as well
+			new_node = Node(value=np.random.random(), number=node_number, connections=connections)
+			self.nodes.append(new_node)
 
-	def make_small_world_network(self, N, re_wire_prob=0.2):
-		#Your code for task 4 goes here
+	def make_small_world_network(self, N, re_wire_prob=0.1, neighbour_range=2):
+		# Create a ring network with connections up to 'neighbour_range' distance
+		self.nodes = [Node(value=np.random.random(), number=i) for i in range(N)]
+		for node in self.nodes:
+			node.connections = [0] * N
+			for offset in range(1, neighbour_range + 1):
+				right = (node.index + offset) % N
+				left = (node.index - offset) % N
+				node.connections[right] = 1
+				node.connections[left] = 1
+
+		# Rewire connections with given probability 're_wire_prob'
+		for node in self.nodes:
+			for neighbour in range(1, neighbour_range + 1):
+				right = (node.index + neighbour) % N
+				if np.random.random() < re_wire_prob:
+					# Choose a node to rewire to that isn't already a neighbour and isn't self
+					potential_targets = [i for i in range(N)
+										 if i != node.index
+										 and self.nodes[node.index].connections[i] == 0]
+					if potential_targets:
+						new_target = np.random.choice(potential_targets)
+						# Disconnect the original connection and make the new one
+						node.connections[right] = 0
+						self.nodes[right].connections[node.index] = 0
+						node.connections[new_target] = 1
+						self.nodes[new_target].connections[node.index] = 1
 
 	def plot(self):
 
-		fig = plt.figure()
-		ax = fig.add_subplot(111)
-		ax.set_axis_off()
+			fig = plt.figure()
+			ax = fig.add_subplot(111)
+			ax.set_axis_off()
 
-		num_nodes = len(self.nodes)
-		network_radius = num_nodes * 10
-		ax.set_xlim([-1.1*network_radius, 1.1*network_radius])
-		ax.set_ylim([-1.1*network_radius, 1.1*network_radius])
+			num_nodes = len(self.nodes)
+			network_radius = num_nodes * 10
+			ax.set_xlim([-1.1*network_radius, 1.1*network_radius])
+			ax.set_ylim([-1.1*network_radius, 1.1*network_radius])
 
-		for (i, node) in enumerate(self.nodes):
-			node_angle = i * 2 * np.pi / num_nodes
-			node_x = network_radius * np.cos(node_angle)
-			node_y = network_radius * np.sin(node_angle)
+			for (i, node) in enumerate(self.nodes):
+				node_angle = i * 2 * np.pi / num_nodes
+				node_x = network_radius * np.cos(node_angle)
+				node_y = network_radius * np.sin(node_angle)
 
-			circle = plt.Circle((node_x, node_y), 0.3*num_nodes, color=cm.hot(node.value))
-			ax.add_patch(circle)
+				circle = plt.Circle((node_x, node_y), 0.3*num_nodes, color=cm.hot(node.value))
+				ax.add_patch(circle)
 
-			for neighbour_index in range(i+1, num_nodes):
-				if node.connections[neighbour_index]:
-					neighbour_angle = neighbour_index * 2 * np.pi / num_nodes
-					neighbour_x = network_radius * np.cos(neighbour_angle)
-					neighbour_y = network_radius * np.sin(neighbour_angle)
+				for neighbour_index in range(i+1, num_nodes):
+					if node.connections[neighbour_index]:
+						neighbour_angle = neighbour_index * 2 * np.pi / num_nodes
+						neighbour_x = network_radius * np.cos(neighbour_angle)
+						neighbour_y = network_radius * np.sin(neighbour_angle)
 
-					ax.plot((node_x, neighbour_x), (node_y, neighbour_y), color='black')
+						ax.plot((node_x, neighbour_x), (node_y, neighbour_y), color='black')
+
 
 def test_networks():
 
@@ -392,7 +427,28 @@ def main():
 	if testing == True or testt == True:
 		run_defuant(beta=beta, threshold=threshold, population_size=100, iterations=10000, testing=testing)
 
-
+	#task 4
+	if "-ring_network" in sys.argv:
+		index = sys.argv.index("-ring_network") + 1
+		N = int(sys.argv[index])
+		network = Network()
+		network.make_ring_network(N, neighbour_range=1)  # Set range as 1
+		network.plot()
+	elif "-small_world" in sys.argv:
+		index = sys.argv.index("-small_world") + 1
+		N = int(sys.argv[index])
+		re_wire_prob = 0.2  # default re-wiring probability
+		if "-re_wire" in sys.argv:
+			re_wire_index = sys.argv.index("-re_wire") + 1
+			re_wire_prob = float(sys.argv[re_wire_index])
+		network = Network()
+		network.make_small_world_network(N, re_wire_prob)
+		network.plot()
+	else:
+		print("Usage:")
+		print("python FCP_assignment_v3.py -ring_network <N>")
+		print("python FCP_assignment_v3.py -small_world <N> [-re_wire <probability>]")
+	plt.show()
 
 if __name__=="__main__":
 	main()
