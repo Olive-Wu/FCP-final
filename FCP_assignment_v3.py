@@ -22,39 +22,46 @@ class Network:
 			self.nodes = nodes
 
 	def get_mean_degree(self):
-		if not self.nodes:
-			return 0
-
+		if not self.nodes: # If there are no nodes in the network
+			return 0  # Return mean degree as 0
+		
+        	# Calculate the degree of each node
 		degrees = [sum(1 for conn in node.connections if conn == 1) for node in self.nodes]
-		mean_degree = np.mean(degrees)
+		mean_degree = np.mean(degrees) # Calculate the mean degree
 		return mean_degree
 
 
 	def get_mean_clustering(self):
 		clustering_coeffs = []
+		
+        	# Iterate through each node in the network
 		for node in self.nodes:
 			neighbors = [i for i, connected in enumerate(node.connections) if connected]
-			if len(neighbors) < 2:
-				clustering_coeffs.append(0)
-				continue
+			if len(neighbors) < 2: # If the node has less than 2 neighbors
+				clustering_coeffs.append(0)  # Append 0 to clustering coefficients list
 
+           		 # Calculate the possible triangles for the node
 			possible_triangles = len(neighbors) * (len(neighbors) - 1) / 2
 			actual_triangles = 0
+			# Count the actual triangles
 			for i in range(len(neighbors)):
 				for j in range(i + 1, len(neighbors)):
 					if self.nodes[neighbors[i]].connections[neighbors[j]]:
 						actual_triangles += 1
 
+            		# Calculate clustering coefficient
 			clustering_coeffs.append(actual_triangles / possible_triangles)
-
+			
+        	# Calculate the mean clustering coefficient
 		mean_clustering_coefficient = np.mean(clustering_coeffs)
 		return mean_clustering_coefficient
 
-
+    	# calculate the mean path length by using breadth-first-search
 	def get_mean_path_length(self):
 		num_nodes = len(self.nodes)
 		path_lengths = []
 
+        	# Iterate through each node and calculate shortest paths
 		for start in range(num_nodes):
 			visited = [False] * num_nodes
 			distances = [0] * num_nodes
@@ -62,6 +69,7 @@ class Network:
 
 			visited[start] = True
 
+            		# Breadth-first search to calculate shortest paths
 			while queue:
 				current = queue.pop(0)
 				for neighbour_index, connected in enumerate(self.nodes[current].connections):
@@ -70,10 +78,13 @@ class Network:
 						distances[neighbour_index] = distances[current] + 1
 						queue.append(neighbour_index)
 			path_lengths.extend([dist for dist in distances if dist > 0])
-		if not path_lengths:
-			return float('inf')
+			
+		if not path_lengths: # If there are no valid path lengths calculated
+			return float('inf')# Return infinity
+		
+		# Calculate the mean path length
 		mean_path_length = sum(path_lengths) / (num_nodes * (num_nodes - 1))
-		return round(mean_path_length, 15)
+		return round(mean_path_length, 15) # Round the mean path length to 15 decimal places
 
 	def make_random_network(self, N, connection_probability=0.5):
 		'''
@@ -434,7 +445,7 @@ def main():
 			nodes = int(sys.argv[index]) # number of nodes
 			conn_arg = sys.argv[index + 1] if index + 1 < len(sys.argv) else None
 			try:
-				conn = int(conn_arg) # connection probability
+				conn = float(conn_arg) # connection probability
 			except(ValueError, TypeError):
 				conn = 0.5 # connection probability default
 			
@@ -476,7 +487,7 @@ def main():
 		network.make_small_world_network(N, re_wire_prob)
 		network.plot()
 	else:
-		print("Usage:")
+		print("Usage for task4:")
 		print("python FCP_assignment_v3.py -ring_network <N>")
 		print("python FCP_assignment_v3.py -small_world <N> [-re_wire <probability>]")
 	plt.show()
