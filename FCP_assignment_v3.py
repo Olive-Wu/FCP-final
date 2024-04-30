@@ -426,7 +426,27 @@ def main():
 		testing = 1
 	if testing == True or testt == True:
 		run_defuant(beta=beta, threshold=threshold, population_size=100, iterations=10000, testing=testing)
-
+	#task 3
+	if "-network" in sys.argv:
+		try:
+			index = sys.argv.index("-network") + 1
+			N = int(sys.argv[index])
+			network = Network()
+			network.make_random_network(N=N, connection_probability=0.5)
+			network.plot()
+			plt.show
+			print(f"Mean degree: {network.get_mean_degree()}")
+			print(f"Average path length: {network.get_mean_path_length()}")
+			print(f"Clustering coefficient: {network.get_mean_clustering()}")
+		except (IndexError, ValueError):
+			print('Please enter an integer (number of nodes) after "-network"')
+	elif "-test_network" in sys.argv:
+		test_networks()
+	else:
+		print("Usage for task3:")
+		print("python FCP_assignment_v3.py -network <N>")
+		print("python FCP_assignment_v3.py -test_network")
+	
 	#task 4
 	if "-ring_network" in sys.argv:
 		index = sys.argv.index("-ring_network") + 1
