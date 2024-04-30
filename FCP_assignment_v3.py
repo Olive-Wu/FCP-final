@@ -426,25 +426,36 @@ def main():
 		testing = 1
 	if testing == True or testt == True:
 		run_defuant(beta=beta, threshold=threshold, population_size=100, iterations=10000, testing=testing)
-	#task 3
-	if "-network" in sys.argv:
+	
+	# task 3
+	if "-network" in sys.argv: # check if '-network' flag is present in command line arguments
 		try:
-			index = sys.argv.index("-network") + 1
-			N = int(sys.argv[index])
-			network = Network()
-			network.make_random_network(N=N, connection_probability=0.5)
-			network.plot()
-			plt.show
+			index = sys.argv.index("-network") + 1 # find the index of 'number of nodes'
+			nodes = int(sys.argv[index]) # number of nodes
+			conn_arg = sys.argv[index + 1] if index + 1 < len(sys.argv) else None
+			try:
+				conn = int(conn_arg) # connection probability
+			except(ValueError, TypeError):
+				conn = 0.5 # connection probability default
+			
+			network = Network() 
+			network.make_random_network(N=nodes, connection_probability=conn)# create a random network
+			network.plot() # plot it
+			plt.show # show the plot
+			
 			print(f"Mean degree: {network.get_mean_degree()}")
 			print(f"Average path length: {network.get_mean_path_length()}")
 			print(f"Clustering coefficient: {network.get_mean_clustering()}")
+			
 		except (IndexError, ValueError):
 			print('Please enter an integer (number of nodes) after "-network"')
-	elif "-test_network" in sys.argv:
-		test_networks()
+			
+	elif "-test_network" in sys.argv: # check if '-test_network' flag is present in command line arguments
+		test_networks() # call the test function to test networks
 	else:
+		# print usage instructions if no valid flags are provided
 		print("Usage for task3:")
-		print("python FCP_assignment_v3.py -network <N>")
+		print("python FCP_assignment_v3.py -network <N> <probability>")
 		print("python FCP_assignment_v3.py -test_network")
 	
 	#task 4
