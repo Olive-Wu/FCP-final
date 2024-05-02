@@ -41,7 +41,6 @@ class Network:
             neighbors = [i for i, connected in enumerate(node.connections) if connected]
             if len(neighbors) < 2:  # If the node has less than 2 neighbors
                 clustering_coeffs.append(0)  # Append 0 to clustering coefficients list
-                continue
 
             # Calculate the possible triangles for the node
             possible_triangles = len(neighbors) * (len(neighbors) - 1) / 2
@@ -531,7 +530,8 @@ def main():
         # Using network or gird
         if "-use_network" in sys.argv:
             # Get the given size
-            pop_size = int(sys.argv[-1])
+            index = sys.argv.index("-use_network") + 1
+            pop_size = int(sys.argv[index])
             ising_network(pop_size, alpha, H)
         else:
             ising_main(population, alpha, H)
@@ -552,7 +552,8 @@ def main():
             threshold = float(sys.argv[threshold_index])
         if "-use_network" in sys.argv:
             # Get the given size
-            pop_size = int(sys.argv[-1])
+            index = sys.argv.index("-use_network") + 1
+            pop_size = int(sys.argv[index])
             defuant_network(pop_size, threshold, beta, iterations=100)
             # Do not test the original defuant model
             testing = 0
