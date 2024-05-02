@@ -356,7 +356,7 @@ def defuant_model(opinions, threshold, beta,iterations):
 
         if abs(opinions[i] - opinions[j]) < threshold:
             opinions[i] += beta * (opinions[j] - opinions[i])
-            opinions[j] += beta * (opinions[i] - opinions[j])
+            opinions[j] -= beta * (opinions[i] - opinions[j])
         for i in range(len(opinions)):
             opinions_over_time[i].append(opinions[i])
     return opinions_over_time
