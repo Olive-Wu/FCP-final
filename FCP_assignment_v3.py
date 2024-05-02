@@ -2,6 +2,7 @@ import numpy as np
 import matplotlib
 import matplotlib.pyplot as plt
 import matplotlib.cm as cm
+from matplotlib.animation import FuncAnimation
 import sys
 matplotlib.use('TkAgg')
 
@@ -355,8 +356,9 @@ def defuant_model(opinions, threshold, beta,iterations):
         j = (i + 1) % len(opinions) if np.random.rand() > 0.5 else (i - 1) % len(opinions)
 
         if abs(opinions[i] - opinions[j]) < threshold:
-            opinions[i] += beta * (opinions[j] - opinions[i])
-            opinions[j] -= beta * (opinions[i] - opinions[j])
+            bias = beta* (opinions[j] - opinions[i])
+            opinions[i] += bias
+            opinions[j] -= bias
         for i in range(len(opinions)):
             opinions_over_time[i].append(opinions[i])
     return opinions_over_time
@@ -392,6 +394,108 @@ def run_defuant(beta, threshold, population_size, iterations, testing=False):
     plt.tight_layout()
     plt.show()
 
+'''
+==============================================================================================================
+This section contains code for the Ising and Defuant Model modified with network model - task 5 in the assignment
+==============================================================================================================
+'''
+
+# Plot a net
+def NetPlot(fig, ax, net, current_frame):
+    ax.clear()
+    ax.set_title(f'Frame {current_frame}')
+    num_nodes = len(net.nodes)
+    network_radius = num_nodes * 10
+    ax.set_xlim([-1.1 * network_radius, 1.1 * network_radius])
+    ax.set_ylim([-1.1 * network_radius, 1.1 * network_radius])
+
+    for (i, node) in enumerate(net.nodes):
+        node_angle = i * 2 * np.pi / num_nodes
+        node_x = network_radius * np.cos(node_angle)
+        node_y = network_radius * np.sin(node_angle)
+
+        circle = plt.Circle((node_x, node_y), 0.3 * num_nodes, color=cm.hot(node.value))
+        ax.add_patch(circle)
+
+        for neighbour_index in range(i + 1, num_nodes):
+            if node.connections[neighbour_index]:
+                neighbour_angle = neighbour_index * 2 * np.pi / num_nodes
+                neighbour_x = network_radius * np.cos(neighbour_angle)
+                neighbour_y = network_radius * np.sin(neighbour_angle)
+
+                ax.plot((node_x, neighbour_x), (node_y, neighbour_y), color='black')
+
+# Display the model in an animation graph
+current_frame = 0
+def animationNet(nets_seq):
+    global current_frame
+    fig = plt.figure()
+    ax = fig.add_subplot(111)
+    ax.set_axis_off()
+    def update(frame):
+        global current_frame
+        current_frame += 1
+        current_frame = min(current_frame, len(nets_seq)-1)
+        NetPlot(fig, ax, nets_seq[current_frame], current_frame)
+    # Draw the animation
+    anim = FuncAnimation(fig, update, 
+                         frames=len(nets_seq), repeat=False,
+                         interval=500)
+    anim.save("animation.gif")
+    plt.show()
+    current_frame = 0
+
+def ising_network(population, alpha=None, external=0.0):
+    # Build a small-world model first
+    net = Network()
+    net.make_small_world_network(population, re_wire_prob=0.2)
+    
+    # Traverse each node and calculate the agreement to decide the final value
+    nodes = net.nodes
+    net_seqs = [net]
+    for node in nodes:
+        # Compute the agreement first by D_i=Sum(S_i*S_j)+H*S_i
+        agreement = external*node.value
+        for k in range(len(node.connections)):
+            if node.connections[k] == 1:
+                agreement += node.value*nodes[k].value
+        # Flip the value if need
+        prob_flip = np.exp(-agreement) / alpha if agreement > 0 else 1
+        if np.random.random() < prob_flip or agreement < 0:
+            node.value *= -1
+        # Add the current net
+        net_seqs.append(net)
+    
+    # Display the processing
+    animationNet(net_seqs)
+    
+    # Return the network
+    return net
+    
+def defuant_network(population, threshold, beta, iterations):
+    # Build a small-world model first
+    net = Network()
+    net.make_small_world_network(population, re_wire_prob=0.2)
+    
+    # Traverse each node and calculate the agreement to decide the final value
+    nodes = net.nodes
+    net_seqs = [net]
+    for t in range(iterations):
+        i = np.random.randint(len(nodes))
+        j = (i + 1) % len(nodes) if np.random.rand() > 0.5 else (i - 1) % len(nodes)
+
+        if abs(nodes[i].value - nodes[j].value) < threshold:
+            bias = beta * (nodes[j].value - nodes[i].value)
+            nodes[i].value += bias
+            nodes[j].value -= bias
+        
+        net_seqs.append(net)
+        
+    # Display the processing
+    animationNet(net_seqs)
+    
+    # Return the network
+    return net
 
 '''
 ==============================================================================================================
@@ -403,6 +507,8 @@ def main():
 	#You should write some code for handling flags here
 	global testt
 
+	# task 5 has been added into both task 1 and task 2
+	
 	# task 1:
 	H = 0.0
 	alpha = 1.0
@@ -416,7 +522,13 @@ def main():
 			alpha_index = sys.argv.index("-alpha") + 1
 			alpha = float(sys.argv[alpha_index])
 		population = np.random.choice([-1, 1], size=(grid_size, grid_size))
-		ising_main(population, alpha, H)
+		# Using network or gird
+        	if "-use_network" in sys.argv:
+            		# Get the given size
+            		pop_size = int(sys.argv[-1])
+            		ising_network(pop_size, alpha, H)
+        	else:
+            		ising_main(population, alpha, H)
 	elif "-test_ising" in sys.argv:
 		test_ising()
 	# task 2
@@ -432,6 +544,12 @@ def main():
 		if "-threshold" in sys.argv:
 			threshold_index = sys.argv.index("-threshold") + 1
 			threshold = float(sys.argv[threshold_index])
+		if "-use_network" in sys.argv:
+            		# Get the given size
+            		pop_size = int(sys.argv[-1])
+            		defuant_network(pop_size, threshold, beta, iterations=100)
+            		# Do not test the original defuant model
+            		testing = 0
 
 	elif "-test_defuant" in sys.argv:
 		testing = 1
